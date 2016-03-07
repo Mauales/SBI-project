@@ -5,7 +5,7 @@ How to push to repository?
 Create a connexion between this repository online and a local repository. 
 open a terminal 
 
-git clone URL (git://github.com/Mauales/SBI-project)
+git clone git://github.com/Mauales/SBI-project
 
 to get the last changes from online repository in local open a terminal and go to the local directory:
 
