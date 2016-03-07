@@ -1,7 +1,7 @@
 import sys
 from numpy import *
 from matplotlib import *
-import tkinter 
+from tkinter import *
 
 #read sequences
 #sequences are stored in many lines
@@ -22,11 +22,15 @@ def delta(l,m):
   return 0
 
 def process():
- global entry_var
-
- seq=[]
- seq.append(entry_var.get())
+ global text_area
  
+ print(type(text_area))
+ print(text_area)
+ seq=[]
+ #seq.append(entry_var.get())
+ seq.append(text_area.get("1.0",END))
+ print(seq)
+
  for q in range(0,len(seq)):
  	pair=traceback(fill_matrix(seq[q]),seq[q],0,len(seq[q])-1,[])
  	print ("max # of folding pairs: ",len(pair))
@@ -75,15 +79,18 @@ def traceback(s,seq,i,j,pair):
      break
  return pair
 
+window = Tk()
 
-top = tkinter.Tk()
+frame=Frame(window)
+frame.pack()
 
-label = tkinter.Label(top, text="Enter a RNA sequence:")
-label.pack( side=tkinter.LEFT )
-entry_var = tkinter.StringVar()
-entry = tkinter.Entry(top, textvariable=entry_var)
-entry.pack( side=tkinter.LEFT )
-b = tkinter.Button(top, text="Submit", command=process)
-b.pack( side=tkinter.LEFT )
+text_area = Text(frame)
+text_area.pack()
 
-top.mainloop()
+label = Label(window, text="Enter a RNA sequence:")
+label.pack( side=LEFT )
+
+b = Button(window, text="Submit", command=process)
+b.pack( side=LEFT )
+
+window.mainloop()
