@@ -48,6 +48,9 @@ def FASTA_iterator(lines):
  					sys.stderr.write(str(e)+"\n")
  			identifier = line[1:].strip()
  			sequence = ""
+ 		elif not line.startswith(">"):
+ 			identifier="query"
+ 			sequence+=line.strip()
  		else:
  			sequence+=line.strip()		
  	if len(sequence)>0:
