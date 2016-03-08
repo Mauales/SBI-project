@@ -7,16 +7,17 @@ class RNASequence(object):
 	
 	def __init__(self, identifier, sequence):
 
-		self.identifier = identifier
-		self.sequence = sequence
+		self.__identifier = identifier
+		self.__sequence = sequence
 
-		for letter in self.sequence:
+		for letter in self.__sequence:
 			if letter not in self.alphabet:
 				e = IncorrectSequenceLetter(letter, self.__class__.__name__)
 				raise e
-	def get_seq(self):
-
-		return dict(identifier => sequence)
+	def get_identifier(self):
+		return self.__identifier
+	def get_sequence(self):
+		return self.__sequence
 
 class IncorrectSequenceLetter(ValueError):
 	

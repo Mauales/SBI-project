@@ -25,22 +25,22 @@ def delta(l,m):
 def process():
 	global text_area
 	seq=[]
-	
-	for identifier, sequence in FASTA_iterator():
-		seq.append(sequence)
+
+	lines = text_area.get("1.0", END).splitlines()
+	for things in FASTA_iterator(lines):
+		seq.append(things.get_sequence())
 		
 	for q in range(0,len(seq)):
 		pair=traceback(fill_matrix(seq[q]),seq[q],0,len(seq[q])-1,[])
-		print ("max # of folding pairs: ",len(pair))
+		print ("max number of folding pairs: ",len(pair))
 		for x in range(0,len(pair)):
 			print ('%d %d %s==%s' % (pair[x][0],pair[x][1],pair[x][2],pair[x][3]))
 	print ("---")
-  
-def FASTA_iterator():
 
+def FASTA_iterator(lines):
  	sequence = ""
- 	for line in text_area.get("1.0",END).splitlines():
- 		if line[0]==">":
+ 	for line in lines:
+ 		if line.startswith(">"):
  			if len(sequence)>0:
  				try:
  					yield RNASequence(identifier, sequence)
@@ -49,7 +49,7 @@ def FASTA_iterator():
  			identifier = line[1:].strip()
  			sequence = ""
  		else:
- 			sequence+=line.strip()
+ 			sequence+=line.strip()		
  	if len(sequence)>0:
  		try:
  			yield RNASequence(identifier, sequence)
