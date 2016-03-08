@@ -4,10 +4,56 @@ from matplotlib import *
 from tkinter import *
 from check_RNA import *
 
-#read sequences
-#sequences are stored in many lines
-#f=open(sys.argv[1], 'r')
 
+##PROCESSING INPUT AND OUTPUT
+
+def process():
+	
+	global text_area
+	seq=[]
+	iden=[]
+
+	#Processing the user input
+
+	lines = text_area.get("1.0", END).splitlines()
+	for things in FASTA_iterator(lines):
+		seq.append(things.get_sequence())
+		iden.append(things.get_identifier())
+
+	#Calling the Nussinov algotihm and printing the results		
+
+	for q in range(0,len(seq)):
+		pair=traceback(fill_matrix(seq[q]),seq[q],0,len(seq[q])-1,[])
+		print ("max number of folding pairs: ",len(pair))
+		for x in range(0,len(pair)):
+			print ('%d %d %s==%s' % (pair[x][0],pair[x][1],pair[x][2],pair[x][3]))
+	print ("---")
+
+	window.destroy()
+
+def FASTA_iterator(lines):
+ 	sequence = ""
+ 	identifier = "query"
+ 	for line in lines:
+ 		if line.startswith(">"):
+ 			if len(sequence)>0:
+ 				try:
+ 					yield RNASequence(identifier, sequence)
+ 				except IncorrectSequenceLetter as e:
+ 					sys.stderr.write(str(e)+"\n")
+ 			identifier = line[1:].strip()
+ 			sequence = ""
+ 		else:
+ 			sequence+=line.strip()		
+ 	if len(sequence)>0:
+ 		try:
+ 			yield RNASequence(identifier, sequence)
+ 		except IncorrectSequenceLetter as e:
+ 			sys.stderr.write(str(e)+"\n")
+
+##NUSSINOV ALGORITHM
+
+#Delta scores for pairs
 
 def delta(l,m):
 	delta=0
@@ -21,43 +67,6 @@ def delta(l,m):
 		return 1
 	else:
 		return 0
-
-def process():
-	global text_area
-	seq=[]
-
-	lines = text_area.get("1.0", END).splitlines()
-	for things in FASTA_iterator(lines):
-		seq.append(things.get_sequence())
-		
-	for q in range(0,len(seq)):
-		pair=traceback(fill_matrix(seq[q]),seq[q],0,len(seq[q])-1,[])
-		print ("max number of folding pairs: ",len(pair))
-		for x in range(0,len(pair)):
-			print ('%d %d %s==%s' % (pair[x][0],pair[x][1],pair[x][2],pair[x][3]))
-	print ("---")
-
-def FASTA_iterator(lines):
- 	sequence = ""
- 	for line in lines:
- 		if line.startswith(">"):
- 			if len(sequence)>0:
- 				try:
- 					yield RNASequence(identifier, sequence)
- 				except IncorrectSequenceLetter as e:
- 					sys.stderr.write(str(e)+"\n")
- 			identifier = line[1:].strip()
- 			sequence = ""
- 		elif not line.startswith(">"):
- 			identifier="query"
- 			sequence+=line.strip()
- 		else:
- 			sequence+=line.strip()		
- 	if len(sequence)>0:
- 		try:
- 			yield RNASequence(identifier, sequence)
- 		except IncorrectSequenceLetter as e:
- 			sys.stderr.write(str(e)+"\n")
 
 def fill_matrix(seq):
 
@@ -100,16 +109,19 @@ def traceback(s,seq,i,j,pair):
 					break
 	return pair
 
+#GRAPHICAL INTERFACE INPUT
+
 window = Tk()
+window.title("Title of the program")
+
+label = Label(window, text="Enter a RNA sequence:")
+label.pack( side = TOP)
 
 frame=Frame(window)
 frame.pack()
 
 text_area = Text(frame)
 text_area.pack()
-
-label = Label(window, text="Enter a RNA sequence:")
-label.pack( side=LEFT )
 
 b = Button(window, text="Submit", command=process)
 b.pack( side=LEFT )
