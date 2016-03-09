@@ -25,9 +25,14 @@ def process():
 	for q in range(0,len(seq)):
 		pair=traceback(fill_matrix(seq[q]),seq[q],0,len(seq[q])-1,[])
 		print ("max number of folding pairs: ",len(pair))
+		dot_bracket = list("·"*len(seq[q]))
 		for x in range(0,len(pair)):
 			print ('%d %d %s==%s' % (pair[x][0],pair[x][1],pair[x][2],pair[x][3]))
-	print ("---")
+			dot_bracket[pair[x][0]]="("
+			dot_bracket[pair[x][1]]=")"
+	#Printing dot-bracket
+	print ("\nDot-bracket representation\n",''.join(dot_bracket))
+	print ("\n---")
 
 	window.destroy()
 
