@@ -30,8 +30,9 @@ def process():
 			print ('%d %d %s==%s' % (pair[x][0],pair[x][1],pair[x][2],pair[x][3]))
 			dot_bracket[pair[x][0]]="("
 			dot_bracket[pair[x][1]]=")"
-	#Printing dot-bracket
-	print ("\nDot-bracket representation\n",''.join(dot_bracket))
+
+		#Printing dot-bracket
+		print ("\nDot-bracket representation\n",str(seq[q])+"\n",''.join(dot_bracket))
 	print ("\n---")
 
 	window.destroy()
