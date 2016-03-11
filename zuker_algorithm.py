@@ -60,6 +60,7 @@ def do_basepair(i,j):
 		return 0
 
 def hairpin_loop(i, j):
+	hairpin_energy=inf
 	hairpin_nucleotides = abs(i-j) + 1
 	if hairpin_nucleotides <= 4:
 		return inf
@@ -104,6 +105,7 @@ def stacking_loop (row, column):
 	return stacking_energy_value
 
 def bulge_loop(row1, column1, row2, column2):
+	bulge_energy = inf
 	if abs(row2-row1)>abs(column1-column2) or abs(row2-row1)<abs(column1-column2):
 		bulge_nucleotide = abs(abs(row2-row1)-abs(column1-column2))
 
@@ -122,6 +124,7 @@ def bulge_loop(row1, column1, row2, column2):
 	return bulge_energy
 
 def interior_loop(row1, column1, row2, column2):
+	interior_energy = inf
 	interior_nucleotides = (row2-row1)+(column1-column2)+2
 
 	if interior_nucleotides == 5:
@@ -144,7 +147,7 @@ def calculate_V(i, j):
 	elif V[i][j] != not_calculated:
 		return V[i][j]
 	#case 1 FH(i,j)
-	FH = minimum_energy = hairpin_loop(i,j)
+	minimum_energy = hairpin_loop(i,j)
 
 	#case 2 min[FL(i,j,h,k) + V(h,k)]
 
@@ -184,9 +187,12 @@ def calculate_V(i, j):
 			pathmatrix[i][j][1] = k
 			loop_type[i][j] = -4 #bifurcation
 
-	V[i][j] = minimum_energy
-
-	return minimum_energy
+	if minimum_energy > 900:
+		V[i][j] = inf
+		return inf
+	else:
+		V[i][j] = minimum_energy
+		return minimum_energy
 
 def calculate_W(i, j):
 	if W[i][j] != not_calculated:
@@ -198,12 +204,12 @@ def calculate_W(i, j):
 		loop_type[i][j] = -5 # don't basepair
 	elif minimum_energy > calculate_W(i,j-1):
 		minimum_energy = W[i][j-1]
-		loop_type[i][j] = -5 # don't basepair
+		loop_type[i][j] = -6 # don't basepair
 	else:
 		for k in range(i+1, j):
 			if minimum_energy > (calculate_W(i,k)+calculate_W(k+1,j)):
 				minimum_energy = W[i][k] + W[k+1][j]
-				loop_type[i][j]
+				loop_type[i][j] = -7
 
 	W[i][j] = minimum_energy
 	return minimum_energy			
@@ -215,6 +221,7 @@ for n in range(1,len(seq)):
 			calculate_V(i,j)
 			calculate_W(i,j)
 np.set_printoptions(suppress=True)
-sys.stdout = open("zuker.txt","w")
-print (V)
-print (W)
+#sys.stdout = open("zuker.txt","w")
+np.savetxt ("zuker_V2.txt", V, fmt="%.1f", delimiter="\t")
+np.savetxt ("zuker_W2.txt", W, fmt="%.1f", delimiter="\t")
+print(pathmatrix)
