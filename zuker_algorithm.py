@@ -1,9 +1,8 @@
 import numpy as np
 import sys
+import matplotlib.pylab as plt
 
 seq = input("Introduce sequence: ")
-
-pathmatrix=np.zeros((len(seq),len(seq),2))
 
 stacking_energy= [	[-0.9, -1.8, -2.3, -1.1, -1.1, -0.8],
 					[-1.7, -2.9, -3.4, -2.3, -2.1, -1.4],
@@ -29,13 +28,15 @@ W = np.nan *np.ones((len(seq),len(seq)))
 loop_type = np.zeros((len(seq),len(seq)))
 
 def initialize_everything():
+	"""Fill both matrices V and W with 'not calculated' values, then
+	the diagonal cells are filled with 'inf' values because each nucleotide
+	can not pair with himself, and the same for the next superior diagonal, 
+	beacuse two consecutive basis can not pair (high torsion tension)"""
 	for i in range(0,len(seq)):
 		for j in range(0,len(seq)):
 			V[i][j]= not_calculated
 			W[i][j]= not_calculated
 			loop_type[i][j]= -5 # -5 don't pair
-			pathmatrix[i][j][0]= -1
-			pathmatrix[i][j][1]= -1
 	for i in range(0,len(seq)):
 		V[i][i] = inf
 		W[i][i] = inf
@@ -44,6 +45,7 @@ def initialize_everything():
 		W[i][i+1] = inf
 
 def do_basepair(i,j):
+	"""Return 1 if both basis pair, if not it will return 0"""
 	if i == "A" and j == "U":
 		return 1
 	elif i == "U" and j == "A":
@@ -60,6 +62,9 @@ def do_basepair(i,j):
 		return 0
 
 def hairpin_loop(i, j):
+	"""Returns the value of the free energy associated to a
+	certain hairpin loop, with an specific loop size (unpaired
+	basis)"""
 	hairpin_energy=inf
 	hairpin_nucleotides = abs(i-j) + 1
 	if hairpin_nucleotides <= 4:
@@ -81,6 +86,8 @@ def hairpin_loop(i, j):
 	return hairpin_energy	
 
 def getindex_stacking(row,column):
+	"""Return the index of the column or the specific row, needed
+	to compute the stacking loop energy"""
 	if seq[row] == "A" and seq[column] == "U":
 		return 0
 	elif seq[row] == "C" and seq[column] == "G":
@@ -97,6 +104,9 @@ def getindex_stacking(row,column):
 		return -1
 
 def stacking_loop (row, column):
+	"""Gets the column and row index depending on the pair of
+	base pairs that form the stacking region and returns the
+	free energy associated to that structure"""
 	column_pointer = getindex_stacking(row,column)
 	row_pointer = getindex_stacking(row+1, column-1)
 
@@ -105,6 +115,8 @@ def stacking_loop (row, column):
 	return stacking_energy_value
 
 def bulge_loop(row1, column1, row2, column2):
+	"""Returns the energy associated to a determined bulge
+	loop structure"""
 	bulge_energy = inf
 	if abs(row2-row1)>abs(column1-column2) or abs(row2-row1)<abs(column1-column2):
 		bulge_nucleotide = abs(abs(row2-row1)-abs(column1-column2))
@@ -124,6 +136,8 @@ def bulge_loop(row1, column1, row2, column2):
 	return bulge_energy
 
 def interior_loop(row1, column1, row2, column2):
+	"""Returns the value for a determined interior loop
+	size"""
 	interior_energy = inf
 	interior_nucleotides = (row2-row1)+(column1-column2)+2
 
@@ -141,6 +155,8 @@ def interior_loop(row1, column1, row2, column2):
 	return interior_energy
 
 def calculate_V(i, j):
+	"""This function computes every possible structure energy
+	and returns the minimum free energy value"""
 	if do_basepair(seq[i],seq[j]) == 0:
 		V[i][j] = inf
 		return inf
@@ -154,27 +170,20 @@ def calculate_V(i, j):
 	for h in range (i+1,j):
 		for k in range (j-1, h, -1):
 			if do_basepair(seq[h], seq[k]):
-				#print (h,seq[h],"--",seq[k],k)
 				if h == i+1 and k == j-1:
 					temp_energy = stacking_loop(i,j)+ calculate_V(h,k)
 					if (temp_energy < minimum_energy):
 						minimum_energy = temp_energy
-						pathmatrix[i][j][0] = h
-						pathmatrix[i][j][1] = k
 						loop_type[i][j] = -1 #stacking
 				elif h == i+1 or k == j-1:
 					temp_energy = bulge_loop(i,j,h,k) + calculate_V(h,k)
 					if (temp_energy < minimum_energy):
 						minimum_energy = temp_energy
-						pathmatrix[i][j][0] = h
-						pathmatrix[i][j][1] = k
 						loop_type[i][j] = -2 #for bulge
 				else:
 					temp_energy = interior_loop(i,j,h,k) + calculate_V(h,k)
 					if (temp_energy < minimum_energy):
 						minimum_energy = temp_energy
-						pathmatrix[i][j][0] = h
-						pathmatrix[i][j][1] = k
 						loop_type[i][j] = -3 #for interior	
 	
 	#case 3: min[W(i+1,k) + W(k+1, j-1)] condition i+1 < k < j-1
@@ -183,8 +192,6 @@ def calculate_V(i, j):
 		temp_energy = W[i+1][k] + W[k+1][j-1]
 		if (temp_energy < minimum_energy):
 			minimum_energy = temp_energy
-			pathmatrix[i][j][0] = k
-			pathmatrix[i][j][1] = k
 			loop_type[i][j] = -4 #bifurcation
 
 	if minimum_energy > 900:
@@ -195,6 +202,7 @@ def calculate_V(i, j):
 		return minimum_energy
 
 def calculate_W(i, j):
+	"""Computes the minimum free energy value for a certain subsequence/sub-structure"""
 	if W[i][j] != not_calculated:
 		return W[i][j]
 	minimum_energy = calculate_V(i,j)
@@ -212,7 +220,55 @@ def calculate_W(i, j):
 				loop_type[i][j] = -7
 
 	W[i][j] = minimum_energy
-	return minimum_energy			
+	return minimum_energy	
+
+pair =[]		
+
+def traceback_init(row,col):
+	"""Searches for the minimum value in the same row and column,
+	in order to find the initial point and in case, the energy of a cell
+	is obtained because it is a hairpin loop"""
+	min_eneV = []
+	min_eneW = []
+	for x in range(row,col-1):
+		if V[row][x]-W[row][x] == 0:
+			ener = V[row][x]
+			min_eneV.append([row,x,ener])
+	for x in range(row+1,col):
+		if (V[x][col]-W[x][col]) == 0:
+			ener = V[x][col]
+			min_eneV.append([x,col,ener])
+
+	min_eneW = min((t for t in min_eneV), key = lambda k:k[2])
+	if min_eneW[2] <= inf:	
+		i= min_eneW[0]
+		j= min_eneW[1]
+		path(V,i,j,pair)
+
+def path(V,i,j, pair):
+	"""Traceback path similar to the Nussinov algorithm, taking
+	into account the followed steps when filling V matrix and the 
+	obtained energies in matrix W"""
+	if i<j:
+		if V[i][j] == hairpin_loop(i,j):
+			traceback_init(i,j)
+		for h in range (i+1,j):
+			for k in range (j-1, h, -1):
+				if do_basepair(seq[h], seq[k]):
+					if h == i+1 and k == j-1:
+						if V[i][j] == stacking_loop(i,j)+ calculate_V(h,k):
+							pair.append([i,j,seq[i], seq[j]])
+							path(V,h,k,pair)
+					elif h == i+1 or k == j-1:
+						if V[i][j] == bulge_loop(i,j,h,k) + calculate_V(h,k):
+							path(V,h,k,pair)
+					elif V[i][j] == interior_loop(i,j,h,k) + calculate_V(h,k):
+						path(V,h,k,pair)
+		for k in range (i+2, j-1):
+			if V[i][j] == W[i+1][k] + W[k+1][j-1]:
+				path(V,i+1,k,pair)
+				path(V,k+1,j-1,pair)
+				break
 
 initialize_everything()
 for n in range(1,len(seq)):
@@ -220,8 +276,40 @@ for n in range(1,len(seq)):
 			i=j-n
 			calculate_V(i,j)
 			calculate_W(i,j)
-np.set_printoptions(suppress=True)
-#sys.stdout = open("zuker.txt","w")
-np.savetxt ("zuker_V2.txt", V, fmt="%.1f", delimiter="\t")
-np.savetxt ("zuker_W2.txt", W, fmt="%.1f", delimiter="\t")
-print(pathmatrix)
+#np.set_printoptions(suppress=True)
+#np.savetxt ("zuker_V2.txt", V, fmt="%.1f", delimiter="\t")
+#np.savetxt ("loop_type.txt", loop_type, fmt="%.0f", delimiter="\t")
+print(traceback_init(0,len(seq)-1))
+print ("max number of folding pairs: ",len(pair))
+dot_bracket = list("·"*len(seq))
+for x in range(0,len(pair)):
+	print ('%d %d %s==%s' % (pair[x][0],pair[x][1],pair[x][2],pair[x][3]))
+	dot_bracket[pair[x][0]]="("
+	dot_bracket[pair[x][1]]=")"
+
+	#Printing dot-bracket
+print ("\nDot-bracket representation\n",str(seq)+"\n",''.join(dot_bracket))
+print ("\n---")
+
+x=[]
+y=[]
+s=[]
+
+for n in range (0,len(seq)):
+	for j in range(n,len(seq)):
+		i=j-n
+		x.append(j)
+		y.append(i)
+		if V[i][j] > 900:
+			s.append(0.0)
+		else:
+			s.append(50/abs(V[i][j]))
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+ax.xaxis.set_ticks_position('top')
+ax.invert_yaxis()
+ax.set_xticks(np.arange(0,len(seq),1))
+ax.set_yticks(np.arange(0,len(seq),1))
+ax.scatter(x,y,s=s)
+plt.grid()
+plt.show()
