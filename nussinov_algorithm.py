@@ -1,12 +1,8 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*
-
 import sys
 from numpy import *
 import matplotlib.pylab as plt
 from tkinter import *
 from check_RNA import *
-
 
 ##PROCESSING INPUT AND OUTPUT
 
@@ -39,33 +35,9 @@ def process():
 	#Printing dot-bracket
 		print ("\nDot-bracket representation\n",str(seq[q])+"\n",''.join(dot_bracket))
 	print ("\n---")
-	
 	window.destroy()
 
-def FASTA_iterator(lines):
-	""" Generator that reads the lines from input and checks if it contains fasta sequences 
-	or raw sequences. It also checks if they are RNA. In case, they are not raises and exeption"""
-	sequence = ""
-	identifier = "query"
-	for line in lines:
- 		if line.startswith(">"):
- 			if len(sequence)>0:
- 				try:
- 					yield RNASequence(identifier, sequence)
- 				except IncorrectSequenceLetter as e:
- 					sys.stderr.write(str(e)+"\n")
- 			identifier = line[1:].strip()
- 			sequence = ""
- 		else:
- 			sequence+=line.strip()
-	if len(sequence)>0:
- 		try:
- 			yield RNASequence(identifier, sequence)
- 		except IncorrectSequenceLetter as e:
- 			sys.stderr.write(str(e)+"\n")
-
 ##NUSSINOV ALGORITHM
-
 
 def delta(l,m):
 	"""It calculates the delta scores depending on the pairs"""
@@ -113,8 +85,6 @@ def fill_matrix(seq):
 				s[i,j]=max(paired,unpair_i,unpair_j)
 	return s
 
-
-
 #Traceback
 def traceback(s,seq,i,j,pair):
 	""" Traceback to find the minimum energy by maximizing the base pairs"""
@@ -155,31 +125,31 @@ b.pack( side=LEFT )
 window.mainloop()
 
 #ENERGY MATRIX OUTPUT
+def energy_matrix():
+	x=[]
+	y=[]
+	s=[]
 
-x=[]
-y=[]
-s=[]
+	for q in range(0,len(seq)):
+		matrix= fill_matrix(seq[q])
+		for n in range(0,len(seq[q])):
+			for j in range(n,len(seq[q])):
+				maxim = len(seq[q])-1 
+				i=j-n
+				x.append(j)
+				y.append(i)
+				s.append(((matrix[i][j]/matrix[0][maxim])**4)*250)
 
-for q in range(0,len(seq)):
-	matrix= fill_matrix(seq[q])
-	for n in range(0,len(seq[q])):
-		for j in range(n,len(seq[q])):
-			i=j-n
-			x.append(j)
-			y.append(i)
-		if matrix[i][j] == 0.0:
-			s.append(0.0)
-		else:
-			s.append(50/abs(matrix[i][j]))
+		fig = plt.figure()
+		fig = plt.gcf()
+		fig.canvas.set_window_title('Energy matrix')
+		ax = fig.add_subplot(1,1,1)
+		ax.xaxis.set_ticks_position('top')
+		ax.invert_yaxis()
+		ax.set_xticks(arange(0,len(seq[q]),1))
+		ax.set_yticks(arange(0,len(seq[q]),1))
+		ax.scatter(x,y,s=s)
+		plt.grid()
+		plt.show()
 
-fig = plt.figure()
-fig = plt.gcf()
-fig.canvas.set_window_title('Energy matrix')
-ax = fig.add_subplot(1,1,1)
-ax.xaxis.set_ticks_position('top')
-ax.invert_yaxis()
-ax.set_xticks(arange(0,len(seq),1))
-ax.set_yticks(arange(0,len(seq),1))
-ax.scatter(x,y,s=s)
-plt.grid()
-plt.show()
+energy_matrix()

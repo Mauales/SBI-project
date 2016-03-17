@@ -65,7 +65,7 @@ def process():
 	#np.savetxt ("zuker_V2.txt", V, fmt="%.1f", delimiter="\t")
 	#np.savetxt ("loop_type.txt", loop_type, fmt="%.0f", delimiter="\t")
 	#printing the results
-		print(traceback_init(0,len(seq)-1))
+		traceback_init(0,len(seq)-1)
 		print ("max number of folding pairs: ",len(pair))
 		dot_bracket = list("."*len(seq))
 		for x in range(0,len(pair)):
@@ -78,29 +78,6 @@ def process():
 		print ("\n---")
 
 		window.destroy()
-
-def FASTA_iterator(lines):
-	""" Generator that reads the lines from input and checks if it contains fasta sequences 
-	or raw sequences. It also checks if they are RNA. In case, they are not raises and exeption"""
-	
-	sequence = ""
-	identifier = "query"
-	for line in lines:
-		if line.startswith(">"):
-			if len(sequence)>0:
-				try:
-					yield RNASequence(identifier, sequence)
-				except IncorrectSequenceLetter as e:
-					sys.stderr.write(str(e)+"\n")
-			identifier = line[1:].strip()
-			sequence = ""
-		else:
-			sequence+=line.strip()
-	if len(sequence)>0:
-		try:
-			yield RNASequence(identifier, sequence)
-		except IncorrectSequenceLetter as e:
-			sys.stderr.write(str(e)+"\n")
 
 
 def initialize_everything():
